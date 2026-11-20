@@ -1,0 +1,857 @@
+<!doctype html>
+<html lang="ur">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>DostiConnect</title>
+
+    <style>
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            background: #09090d;
+            color: #f7f7fb;
+            font-family: Arial, sans-serif;
+        }
+
+        .wrap {
+            max-width: 980px;
+            margin: 0 auto;
+            min-height: 100vh;
+            padding: 22px;
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #292936;
+            padding-bottom: 15px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 25px;
+            color: #ff3b70;
+        }
+
+        .sub,
+        .muted {
+            color: #aaa;
+            font-size: 13px;
+        }
+
+        .sub {
+            margin-top: 5px
+        }
+
+        .panel {
+            background: #15151e;
+            border: 1px solid #30303d;
+            border-radius: 16px;
+            padding: 18px;
+            margin-top: 20px;
+        }
+
+        input,
+        button {
+            font: inherit;
+            border-radius: 10px;
+            padding: 12px;
+            border: 1px solid #393948;
+        }
+
+        input {
+            width: 100%;
+            background: #0d0d14;
+            color: white;
+            margin: 7px 0 12px;
+        }
+
+        button {
+            background: #ff3b70;
+            color: white;
+            border: 0;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button.secondary {
+            background: #30303d;
+            color: white;
+        }
+
+        button:disabled {
+            opacity: .5;
+            cursor: not-allowed;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 16px;
+            margin-top: 18px;
+        }
+
+        .user {
+            display: block;
+            width: 100%;
+            text-align: left;
+            background: #22222d;
+            margin: 7px 0;
+            padding: 12px;
+        }
+
+        .user.active {
+            outline: 2px solid #ff3b70;
+        }
+
+        #messages {
+            height: 390px;
+            overflow: auto;
+            background: #0d0d14;
+            border-radius: 12px;
+            padding: 12px;
+            margin: 12px 0;
+        }
+
+        .msg {
+            max-width: 80%;
+            padding: 10px 12px;
+            border-radius: 13px;
+            margin: 8px 0;
+            background: #292938;
+            overflow-wrap: anywhere;
+        }
+
+        .mine {
+            margin-left: auto;
+            background: #8e2450;
+        }
+
+        .row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .row input {
+            margin: 0
+        }
+
+        .row button {
+            white-space: nowrap
+        }
+
+        .hidden {
+            display: none !important
+        }
+
+        .reaction-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 7px;
+        }
+
+        .reaction {
+            background: #171722;
+            padding: 4px 7px;
+            border-radius: 12px;
+            font-size: 14px;
+        }
+
+        #status {
+            margin-top: 10px;
+            color: #ffcc80;
+            min-height: 20px;
+        }
+
+        .message-menu-wrap {
+            position: relative;
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 6px;
+        }
+
+        .three-dots {
+            background: #30303d;
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: 20px;
+        }
+
+        .message-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 35px;
+            z-index: 20;
+            width: 240px;
+            max-width: 85vw;
+            max-height: 300px;
+            overflow-y: auto;
+            background: #252532;
+            border: 1px solid #444;
+            border-radius: 10px;
+            padding: 6px;
+            box-shadow: 0 5px 15px #0008;
+        }
+
+        .message-menu.show {
+            display: block;
+        }
+
+        .message-menu button {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 10px;
+            background: transparent;
+            border-radius: 7px;
+            font-size: 14px;
+        }
+
+        .message-menu button:hover {
+            background: #3b3b4b;
+        }
+
+        .emoji-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 3px;
+            padding: 5px;
+        }
+
+        .message-menu .emoji-grid button {
+            width: 100%;
+            text-align: center;
+            padding: 7px 2px;
+            font-size: 19px;
+        }
+
+        @media(max-width:700px) {
+            .grid {
+                grid-template-columns: 1fr
+            }
+
+            .wrap {
+                padding: 14px
+            }
+
+            #messages {
+                height: 45vh
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="wrap">
+
+        <header>
+            <div>
+                <h1>DostiConnect</h1>
+                <div class="sub">Apne doston se connect raho 💬</div>
+            </div>
+            <button id="logoutBtn" class="secondary hidden">Logout</button>
+        </header>
+
+        <section id="authPanel" class="panel">
+            <h2>Create account</h2>
+
+            <label>Your name</label>
+            <input id="name" placeholder="Apna naam" autocomplete="name">
+
+            <label>Email</label>
+            <input id="email" type="email" placeholder="name@example.com" autocomplete="email">
+
+            <label>Password</label>
+            <input id="password" type="password" placeholder="At least 6 characters" autocomplete="current-password">
+
+            <div class="row">
+                <button id="signupBtn">Sign up</button>
+                <button id="loginBtn" class="secondary">Login</button>
+            </div>
+
+            <div class="muted" style="margin-top:12px">
+                Naya account banane ke liye naam, email aur password likhein.
+                Pehle se account hai to Login karein.
+            </div>
+        </section>
+
+        <section id="appPanel" class="hidden">
+
+            <div class="panel">
+                <strong id="welcome">Welcome!</strong>
+                <div class="muted">Online friends list</div>
+            </div>
+
+            <div class="grid">
+
+                <aside class="panel">
+                    <h3>People</h3>
+                    <div id="people">
+                        <span class="muted">Loading users...</span>
+                    </div>
+                </aside>
+
+                <main class="panel">
+                    <h3 id="chatTitle">Kisi dost ko select karein</h3>
+
+                    <div id="messages">
+                        <div class="muted">
+                            Chat shuru karne ke liye left side se kisi user ko select karein.
+                        </div>
+                    </div>
+
+                    <form id="sendForm" class="row">
+                        <input id="messageInput" placeholder="Message likhein..." autocomplete="off" disabled>
+                        <button id="sendBtn" disabled>Send</button>
+                    </form>
+                </main>
+
+            </div>
+        </section>
+
+        <div id="status"></div>
+    </div>
+
+    <script type="module">
+
+        import { initializeApp }
+            from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+
+        import {
+            getAuth,
+            createUserWithEmailAndPassword,
+            signInWithEmailAndPassword,
+            onAuthStateChanged,
+            signOut,
+            updateProfile
+        }
+            from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+        import {
+            getFirestore,
+            doc,
+            setDoc,
+            getDoc,
+            collection,
+            query,
+            orderBy,
+            onSnapshot,
+            addDoc,
+            serverTimestamp,
+            deleteDoc,
+            updateDoc
+        }
+            from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD-hBgIYFbaocdLdL_3phxPl4P5Ou6AAxM",
+            authDomain: "dosticonnect-3e96a.firebaseapp.com",
+            projectId: "dosticonnect-3e96a",
+            storageBucket: "dosticonnect-3e96a.firebasestorage.app",
+            messagingSenderId: "984597125987",
+            appId: "1:984597125987:web:5807cd17a1c23171011156",
+            measurementId: "G-SHPDLBW2W7"
+        };
+
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        const $ = id => document.getElementById(id);
+
+        let selectedUser = null;
+        let stopPeople = null;
+        let stopMessages = null;
+
+
+        function status(message, error = false) {
+            $("status").textContent = message;
+            $("status").style.color = error ? "#ff8585" : "#ffcc80";
+        }
+
+        function chatId(a, b) {
+            return [a, b].sort().join("_");
+        }
+
+        function showApp(user) {
+            $("authPanel").classList.add("hidden");
+            $("appPanel").classList.remove("hidden");
+            $("logoutBtn").classList.remove("hidden");
+            $("welcome").textContent =
+                "Welcome, " + (user.displayName || user.email);
+        }
+
+
+        // SIGN UP
+
+        $("signupBtn").onclick = async () => {
+
+            const name = $("name").value.trim();
+            const email = $("email").value.trim();
+            const password = $("password").value;
+
+            if (!name || !email || password.length < 6) {
+                status("Naam, valid email aur kam az kam 6-character password likhein.", true);
+                return;
+            }
+
+            try {
+
+                const cred = await createUserWithEmailAndPassword(
+                    auth, email, password
+                );
+
+                await updateProfile(cred.user, {
+                    displayName: name
+                });
+
+                await setDoc(doc(db, "users", cred.user.uid), {
+                    uid: cred.user.uid,
+                    name: name,
+                    email: email,
+                    createdAt: serverTimestamp()
+                });
+
+                status("Account ban gaya! 🎉");
+
+            } catch (e) {
+                status(e.message, true);
+            }
+        };
+
+
+        // LOGIN
+
+        $("loginBtn").onclick = async () => {
+
+            const email = $("email").value.trim();
+            const password = $("password").value;
+
+            if (!email || !password) {
+                status("Email aur password likhein.", true);
+                return;
+            }
+
+            try {
+
+                await signInWithEmailAndPassword(auth, email, password);
+                status("Login successful!");
+
+            } catch (e) {
+                status(e.message, true);
+            }
+        };
+
+
+        // LOGOUT
+
+        $("logoutBtn").onclick = async () => {
+
+            try {
+                await signOut(auth);
+                status("Logout ho gaya.");
+            } catch (e) {
+                status(e.message, true);
+            }
+        };
+
+
+        // PEOPLE LIST
+
+        function loadPeople(currentUser) {
+
+            if (stopPeople) stopPeople();
+
+            stopPeople = onSnapshot(
+                collection(db, "users"),
+
+                snap => {
+
+                    $("people").innerHTML = "";
+
+                    snap.forEach(d => {
+
+                        const person = {
+                            ...d.data(),
+                            uid: d.id
+                        };
+
+                        if (d.id === currentUser.uid) return;
+
+                        const b = document.createElement("button");
+
+                        b.className = "user";
+                        b.textContent =
+                            person.name ||
+                            person.displayName ||
+                            person.email ||
+                            "DostiConnect User";
+
+                        b.onclick = () => {
+
+                            document.querySelectorAll(".user").forEach(x => {
+                                x.classList.remove("active");
+                            });
+
+                            b.classList.add("active");
+                            openChat(currentUser, person);
+                        };
+
+                        $("people").appendChild(b);
+
+                    });
+
+                    if (!$("people").children.length) {
+                        $("people").innerHTML =
+                            '<span class="muted">Abhi koi doosra user nahi mila.</span>';
+                    }
+
+                },
+
+                e => status(e.message, true)
+            );
+        }
+
+
+        // OPEN CHAT
+
+        async function openChat(currentUser, person) {
+
+            selectedUser = person;
+
+            $("chatTitle").textContent =
+                "Chat with " + (person.name || "Friend");
+
+            $("messageInput").disabled = false;
+            $("sendBtn").disabled = false;
+
+            $("messages").innerHTML =
+                '<div class="muted">Loading messages...</div>';
+
+            const id = chatId(currentUser.uid, person.uid);
+            const chatRef = doc(db, "chats", id);
+
+            try {
+
+                await setDoc(chatRef, {
+                    members: [currentUser.uid, person.uid],
+                    updatedAt: serverTimestamp()
+                }, { merge: true });
+
+            } catch (e) {
+
+                status(e.message, true);
+                return;
+            }
+
+            if (stopMessages) stopMessages();
+
+            const q = query(
+                collection(db, "chats", id, "messages"),
+                orderBy("createdAt")
+            );
+
+            stopMessages = onSnapshot(q, snap => {
+
+                $("messages").innerHTML = "";
+
+                snap.forEach(d => {
+
+                    const m = d.data();
+
+                    // DELETE FOR ME
+
+                    if (m.hiddenFor && m.hiddenFor[currentUser.uid]) {
+                        return;
+                    }
+
+                    const mine = m.senderId === currentUser.uid;
+
+                    const div = document.createElement("div");
+                    div.className = "msg" + (mine ? " mine" : "");
+
+                    const messageText = document.createElement("div");
+
+                    messageText.textContent =
+                        (mine ? "You" : (person.name || "Friend"))
+                        + ": " + (m.text || "");
+
+                    div.appendChild(messageText);
+
+
+                    // THREE DOTS MENU
+
+                    const wrap = document.createElement("div");
+                    wrap.className = "message-menu-wrap";
+
+                    const dots = document.createElement("button");
+                    dots.type = "button";
+                    dots.className = "three-dots";
+                    dots.textContent = "⋮";
+
+                    const menu = document.createElement("div");
+                    menu.className = "message-menu";
+
+                    dots.onclick = () => {
+
+                        document.querySelectorAll(".message-menu.show")
+                            .forEach(openMenu => {
+                                if (openMenu !== menu) {
+                                    openMenu.classList.remove("show");
+                                }
+                            });
+
+                        menu.classList.toggle("show");
+                    };
+
+
+                    // DELETE FOR ME
+
+                    const deleteMe = document.createElement("button");
+                    deleteMe.type = "button";
+                    deleteMe.textContent = "🗑️ Delete for Me";
+
+                    deleteMe.onclick = async () => {
+
+                        try {
+
+                            await updateDoc(
+                                doc(db, "chats", id, "messages", d.id),
+                                {
+                                    [`hiddenFor.${currentUser.uid}`]: true
+                                }
+                            );
+
+                            status("Message aap ki chat se delete ho gaya ❤️");
+
+                        } catch (e) {
+                            status(e.message, true);
+                        }
+                    };
+
+                    menu.appendChild(deleteMe);
+
+
+                    // DELETE FOR EVERYONE
+
+                    if (mine) {
+
+                        const deleteEveryone = document.createElement("button");
+
+                        deleteEveryone.type = "button";
+                        deleteEveryone.textContent = "🗑️ Delete for Everyone";
+
+                        deleteEveryone.onclick = async () => {
+
+                            if (!confirm("Kya message dono taraf se delete karna hai?")) {
+                                return;
+                            }
+
+                            try {
+
+                                await deleteDoc(
+                                    doc(db, "chats", id, "messages", d.id)
+                                );
+
+                                status("Message dono taraf se delete ho gaya ❤️");
+
+                            } catch (e) {
+                                status(e.message, true);
+                            }
+                        };
+
+                        menu.appendChild(deleteEveryone);
+                    }
+
+
+                    // EMOJI REACTIONS
+
+                    const reactionTitle = document.createElement("div");
+
+                    reactionTitle.textContent = "React with:";
+                    reactionTitle.style.padding = "8px";
+                    reactionTitle.style.color = "#aaa";
+
+                    menu.appendChild(reactionTitle);
+
+                    const emojiGrid = document.createElement("div");
+                    emojiGrid.className = "emoji-grid";
+
+                    const emojis = [
+                        "❤️", "😂", "👍", "😢", "🔥", "😍",
+                        "🥰", "😘", "😊", "😁", "🤣", "😭",
+                        "😎", "🤔", "😮", "😡", "🥺", "🙏",
+                        "👏", "🎉", "💯", "💕", "💖", "💔",
+                        "💋", "🌹", "🌸", "✨", "⭐", "🥳",
+                        "🤗", "😇", "😴", "🙄", "😜", "🤩",
+                        "💪", "👌", "🫶", "👀", "🤝", "💐",
+                        "😔", "😆", "😋", "🤭", "🫡", "🦋"
+                    ];
+
+                    emojis.forEach(emoji => {
+
+                        const btn = document.createElement("button");
+
+                        btn.type = "button";
+                        btn.textContent = emoji;
+
+                        btn.onclick = async () => {
+
+                            try {
+
+                                await updateDoc(
+                                    doc(db, "chats", id, "messages", d.id),
+                                    {
+                                        [`reactions.${currentUser.uid}`]: emoji
+                                    }
+                                );
+
+                                menu.classList.remove("show");
+
+                            } catch (e) {
+                                status(e.message, true);
+                            }
+                        };
+
+                        emojiGrid.appendChild(btn);
+
+                    });
+
+                    menu.appendChild(emojiGrid);
+
+
+                    wrap.appendChild(dots);
+                    wrap.appendChild(menu);
+                    div.appendChild(wrap);
+
+
+                    // SHOW REACTIONS
+
+                    const reactionList = document.createElement("div");
+                    reactionList.className = "reaction-list";
+
+                    Object.values(m.reactions || {}).forEach(emoji => {
+
+                        const reaction = document.createElement("span");
+
+                        reaction.className = "reaction";
+                        reaction.textContent = emoji;
+
+                        reactionList.appendChild(reaction);
+
+                    });
+
+                    div.appendChild(reactionList);
+
+                    $("messages").appendChild(div);
+
+                });
+
+                $("messages").scrollTop = $("messages").scrollHeight;
+
+            }, e => status(e.message, true));
+
+        }
+
+
+        // SEND MESSAGE
+
+        $("sendForm").onsubmit = async e => {
+
+            e.preventDefault();
+
+            const text = $("messageInput").value.trim();
+            const user = auth.currentUser;
+
+            if (!text || !selectedUser || !user) return;
+
+            const id = chatId(user.uid, selectedUser.uid);
+
+            try {
+
+                await addDoc(
+                    collection(db, "chats", id, "messages"),
+                    {
+                        senderId: user.uid,
+                        text: text,
+                        createdAt: serverTimestamp()
+                    }
+                );
+
+                $("messageInput").value = "";
+
+            } catch (err) {
+                status(err.message, true);
+            }
+        };
+
+
+        // AUTH STATE
+
+        onAuthStateChanged(auth, async user => {
+
+            if (user) {
+
+                showApp(user);
+
+                try {
+
+                    const userRef = doc(db, "users", user.uid);
+                    const userSnap = await getDoc(userRef);
+
+                    if (!userSnap.exists()) {
+
+                        await setDoc(userRef, {
+                            uid: user.uid,
+                            name: user.displayName ||
+                                (user.email ? user.email.split("@")[0] : "Friend"),
+                            email: user.email || "",
+                            createdAt: serverTimestamp()
+                        });
+                    }
+
+                    loadPeople(user);
+
+                } catch (e) {
+                    status(e.message, true);
+                }
+
+            } else {
+
+                if (stopPeople) {
+                    stopPeople();
+                    stopPeople = null;
+                }
+
+                if (stopMessages) {
+                    stopMessages();
+                    stopMessages = null;
+                }
+
+                selectedUser = null;
+
+                $("authPanel").classList.remove("hidden");
+                $("appPanel").classList.add("hidden");
+                $("logoutBtn").classList.add("hidden");
+
+                $("messageInput").disabled = true;
+                $("sendBtn").disabled = true;
+            }
+
+        });
+
+    </script>
+</body>
+
+</html>
